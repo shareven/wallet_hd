@@ -1,5 +1,5 @@
 name: wallet_hd
-description: A Flutter package project , it is use for HD wallet . Support BTC, ETH, ERC20-USDT transfer signature. (用于HD钱包，支持BTC、ETH、ERC20-USDT转账签名).
+description: A Flutter package project , it is use for HD wallet . Support BTC, ETH, ERC20-USDT transfer signature.
 version: 0.0.1
 homepage: https://github.com/shareven/wallet_hd
 
@@ -11,16 +11,16 @@ dependencies:
   flutter:
     sdk: flutter
 
-  bip39: 1.0.3
-  bip32: 1.0.5
-  bs58check: 1.0.1
-  bech32: 0.1.2
-  meta: 1.1.8
-  bitcoin_flutter: 2.0.1
-  web3dart: 1.2.3
-  typed_data: 1.2.0
-  rlp: 1.0.1
-  crypton: 1.0.8
+  bip39: ^1.0.3
+  bip32: ^1.0.5
+  bs58check: ^1.0.1
+  bech32: ^0.1.2
+  meta: ^1.1.8
+  bitcoin_flutter: ^2.0.1
+  web3dart: ^1.2.3
+  typed_data: ^1.2.0
+  rlp: ^1.0.1
+  crypton: ^1.0.8
 
 dev_dependencies:
   flutter_test:
