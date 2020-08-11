@@ -1,6 +1,6 @@
 name: wallet_hd
 description: A Flutter package project , it is use for HD wallet . Support BTC, ETH, ERC20-USDT transfer signature.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/shareven/wallet_hd
 
 environment:

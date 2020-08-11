@@ -9,7 +9,7 @@ Add this line to pubspec.yaml ( 添加这一行到pubspec.yaml)
 
 ``` 
 dependencies:
-     wallet_hd: ^0.0.1
+     wallet_hd: ^0.0.2
 ```
 
 ## How To Use
@@ -18,7 +18,7 @@ Use the class `WalletHd`
 
 Properties and functions:
 ``` dart
-/// 创建随机助记词 | Create Random Mnemonic
+  /// 创建随机助记词 | Create Random Mnemonic
   static String createRandomMnemonic
 
   /// 导入助记词，返回[btc地址 , eth地址] | Import mnemonic words and return [btc address, eth address]

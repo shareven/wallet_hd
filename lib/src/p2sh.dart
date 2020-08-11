@@ -2,14 +2,22 @@ import 'dart:typed_data';
 import 'package:bitcoin_flutter/bitcoin_flutter.dart';
 import 'package:meta/meta.dart';
 import 'package:bs58check/bs58check.dart' as bs58check;
-import 'package:bip32/src/utils/ecurve.dart';
-import 'package:bitcoin_flutter/src/utils/script.dart' as bscript;
-import 'package:bitcoin_flutter/src/utils/constants/op.dart';
-import 'package:bitcoin_flutter/src/crypto.dart';
+// import 'package:bip32/bip32.dart';
+// import 'package:bip32/src/utils/ecurve.dart';
+import 'package:wallet_hd/src/script.dart' as bscript;
+// import 'package:bitcoin_flutter/src/utils/script.dart' as bscript;
+// import 'package:bitcoin_flutter/src/utils/constants/op.dart';
+// import 'package:bitcoin_flutter/src/crypto.dart';
+
+// import 'package:bitcoin_flutter/bitcoin_flutter.dart';
+import 'package:bitcoin_flutter/bitcoin_flutter.dart' as bitcoin_flutter;
+import 'package:wallet_hd/src/crypto.dart';
+import 'package:wallet_hd/src/ecurve.dart';
+import 'package:wallet_hd/src/op.dart';
 
 class P2SH {
   PaymentData data;
-  NetworkType network;
+  bitcoin_flutter.NetworkType network;
   P2SH({@required data, network}) {
     this.network = network ?? bitcoin;
     this.data = data;

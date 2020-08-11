@@ -1,18 +1,18 @@
 library wallet_hd;
 
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:wallet_hd/src/bitcoinTransaction.dart';
-import 'package:wallet_hd/src/ethereumTransaction.dart';
+import 'package:wallet_hd/src/bitcoin_transaction.dart';
+import 'package:wallet_hd/src/ethereum_transaction.dart';
 import 'package:wallet_hd/src/wallet_config.dart';
 import 'package:bitcoin_flutter/bitcoin_flutter.dart' as bitcoin_flutter;
 import 'package:web3dart/web3dart.dart';
 
 /// BTC转账
-export 'package:wallet_hd/src/bitcoinTransaction.dart';
+export 'package:wallet_hd/src/bitcoin_transaction.dart';
 
 /// ETH转账
-export 'package:wallet_hd/src/ethereumTransaction.dart';
-export 'package:wallet_hd/src/rsaProxy.dart';
+export 'package:wallet_hd/src/ethereum_transaction.dart';
+export 'package:wallet_hd/src/rsa_proxy.dart';
 
 class WalletHd {
   /// 创建随机助记词 | Create Random Mnemonic
