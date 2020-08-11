@@ -21,6 +21,8 @@ dependencies:
   typed_data: ^1.2.0
   rlp: ^1.0.1
   crypton: ^1.0.8
+  pointycastle: ^1.0.2
+  hex: ^0.1.2
 
 dev_dependencies:
   flutter_test:

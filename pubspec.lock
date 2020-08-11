@@ -124,7 +124,7 @@ packages:
     source: sdk
     version: "0.0.0"
   hex:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: hex
       url: "https://pub.flutter-io.cn"
@@ -187,7 +187,7 @@ packages:
     source: hosted
     version: "1.9.0"
   pointycastle:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: pointycastle
       url: "https://pub.flutter-io.cn"
