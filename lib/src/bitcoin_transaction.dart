@@ -1,6 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:bitcoin_flutter/bitcoin_flutter.dart';
+import 'package:wallet_hd/src/btc_transaction.dart';
+import 'package:wallet_hd/src/ec_pair.dart';
+import 'package:wallet_hd/src/network_type.dart';
+import 'package:wallet_hd/src/payment.dart';
 import 'package:wallet_hd/src/p2sh.dart';
 import 'package:wallet_hd/src/rlp.dart';
 import 'package:wallet_hd/src/wallet_config.dart';
@@ -26,35 +29,28 @@ class Btransaction {
 class BitcoinTransaction {
   static Future<String> signBitcoinTransaction(
       String privateKey, Btransaction transaction) async {
-    if (transaction != null) {
-      try {
-        ECPair ecPair =
-            ECPair.fromWIF(privateKey, network: transaction.network);
-        transaction.txb.inputs.forEach((element) {
-          int index = transaction.txb.inputs.indexOf(element);
-          transaction.txb.sign(vin: index, keyPair: ecPair);
-        });
-        Transaction tx = transaction.txb.buildIncomplete();
-        String hex = tx.toHex();
-        return hex;
-      } catch (e) {
-        print('BitcoinTransaction.signBitcoinTransaction error : $e');
-      }
-    } else {
-      print(
-          'BitcoinTransaction.signBitcoinTransaction error : transaction is null.');
+    try {
+      ECPair ecPair =
+          ECPair.fromWIF(privateKey, network: transaction.network);
+      transaction.txb.inputs.forEach((element) {
+        int index = transaction.txb.inputs.indexOf(element);
+        transaction.txb.sign(vin: index, keyPair: ecPair);
+      });
+      BtcTransaction tx = transaction.txb.buildIncomplete();
+      String hex = tx.toHex();
+      return hex;
+    } catch (e) {
+      print('BitcoinTransaction.signBitcoinTransaction error : $e');
     }
-    return null;
+    return '';
   }
 
-  // 6a = 106 OP_RETURN
-  // 14 = 20
-  // 6f6d6e69 = omni
   static const _omni = '6a146f6d6e69';
   static final BigInt dirt = BigInt.from(546);
+
   static String _fillLengthWith(String s,
       {int length = 16, String char = '0'}) {
-    if (s == null) return '';
+    if (s.isEmpty) return '';
     if (s.length >= length) return s.substring(0, length);
     return (char * length + s).substring(s.length);
   }
@@ -66,86 +62,76 @@ class BitcoinTransaction {
     return payload;
   }
 
-  static Future<Btransaction> createBitcoinTransaction(
+  static Future<Btransaction?> createBitcoinTransaction(
       String from, String to, num value, num fee,
-      {String type = 'BTC', List<BitcoinIn> unspends}) async {
+      {String type = 'BTC', List<BitcoinIn>? unspends}) async {
     if (WalletConfig.bitcoinType.keys.contains(type) &&
         unspends != null &&
         unspends.isNotEmpty) {
-      CoinInfo coinInfo = WalletConfig.bitcoinType[type];
+      CoinInfo coinInfo = WalletConfig.bitcoinType[type]!;
+      final network = coinInfo.network as NetworkType;
 
-      final txb = new TransactionBuilder(network: coinInfo.network);
+      final txb = TransactionBuilder(network: network);
       BigInt coinFee = numPow2BigInt(fee, coinInfo.decimals);
       BigInt coinValue = numPow2BigInt(value, coinInfo.decimals);
 
       BigInt amount = BigInt.zero;
-      unspends.forEach((element) {
+      for (final element in unspends) {
         amount += numPow2BigInt(element.value, coinInfo.decimals);
         txb.addInput(element.txHash, element.outputNo);
-      });
+      }
       BigInt change = amount - coinValue - coinFee;
-      print("amount:$amount");
-      print("coinValue:$coinValue");
-      print("coinFee:$coinFee");
-      print("change:$change");
       if (change < BigInt.zero) {
         print('Amount is not enough.');
       } else {
         if (change >= dirt) {
-          Uint8List fromAddr = addressToOutputScript(from, coinInfo.network);
-          // 找零给自己 | Get change for yourself
+          Uint8List fromAddr = addressToOutputScript(from, network);
           txb.addOutput(fromAddr, change.toInt());
         }
 
-        Uint8List toAddr = addressToOutputScript(to, coinInfo.network);
-        print(toAddr);
-        // 转给别人 | Transfer to others
+        Uint8List toAddr = addressToOutputScript(to, network);
         txb.addOutput(toAddr, coinValue.toInt());
-        return Btransaction(txb, coinInfo.network);
+        return Btransaction(txb, network);
       }
     }
     return null;
   }
 
-  static Future<Btransaction> createOmniTransaction(
+  static Future<Btransaction?> createOmniTransaction(
       String from, String to, num value, num fee,
-      {String type = 'USDT', List<BitcoinIn> unspends}) async {
+      {String type = 'USDT', List<BitcoinIn>? unspends}) async {
     if (WalletConfig.omniType.keys.contains(type)) {
-      CoinInfo coinInfo = WalletConfig.omniType[type];
+      CoinInfo coinInfo = WalletConfig.omniType[type]!;
+      final network = coinInfo.network as NetworkType;
       try {
-        final txb = new TransactionBuilder(network: coinInfo.network);
+        final txb = TransactionBuilder(network: network);
         const int decimals = 8;
         BigInt coinFee = numPow2BigInt(fee, decimals);
 
         BigInt amount = BigInt.zero;
-        unspends.forEach((element) {
+        for (final element in unspends!) {
           amount += numPow2BigInt(element.value, decimals);
           txb.addInput(element.txHash, element.outputNo);
-        });
+        }
         BigInt change = amount - dirt - coinFee;
         if (change < BigInt.zero) {
           print('Amount is not enough.');
         } else {
           if (change >= dirt) {
-            Uint8List fromAddr = addressToOutputScript(from, coinInfo.network);
-            // 找零给自己 | Get change for yourself
+            Uint8List fromAddr = addressToOutputScript(from, network);
             txb.addOutput(fromAddr, change.toInt());
           }
 
-          Uint8List toAddr = addressToOutputScript(to, coinInfo.network);
-          print("toAddr");
-          print(toAddr);
+          Uint8List toAddr = addressToOutputScript(to, network);
           txb.addOutput(toAddr, dirt.toInt());
 
           BigInt bigValue = numPow2BigInt(value, coinInfo.decimals);
-          int contract = num.parse(coinInfo.address).toInt();
+          int contract = num.parse(coinInfo.address!).toInt();
           String payload = _createOmniPayload(bigValue, contract);
-          print("payload");
-          print(payload);
 
           txb.addOutput(hexToBytes(payload), 0);
 
-          return Btransaction(txb, coinInfo.network);
+          return Btransaction(txb, network);
         }
       } catch (e) {
         print('BitcoinTransaction.createOmniTransaction error : $e');
@@ -154,23 +140,23 @@ class BitcoinTransaction {
     return null;
   }
 
-  static Uint8List addressToOutputScript(String address, [NetworkType nw]) {
+  static Uint8List addressToOutputScript(String address, [NetworkType? nw]) {
     NetworkType network = nw ?? bitcoin;
-    var decodeBase58;
-    var decodeBech32;
+    Uint8List? decodeBase58;
+    Segwit? decodeBech32;
     try {
       decodeBase58 = bs58check.decode(address);
     } catch (err) {}
     if (decodeBase58 != null) {
       if (decodeBase58[0] == network.pubKeyHash) {
-        P2PKH p2pkh = new P2PKH(
-            data: new PaymentData(address: address), network: network);
-        return p2pkh.data.output;
+        P2PKH p2pkh = P2PKH(
+            data: PaymentData(address: address), network: network);
+        return p2pkh.data.output!;
       }
       if (decodeBase58[0] == network.scriptHash) {
         P2SH p2sh =
-            new P2SH(data: new PaymentData(address: address), network: network);
-        return p2sh.data.output;
+            P2SH(data: PaymentData(address: address), network: network);
+        return p2sh.data.output!;
       }
     } else {
       try {
@@ -178,14 +164,14 @@ class BitcoinTransaction {
       } catch (err) {}
       if (decodeBech32 != null) {
         if (network.bech32 != decodeBech32.hrp)
-          throw new ArgumentError('Invalid prefix or Network mismatch');
+          throw ArgumentError('Invalid prefix or Network mismatch');
         if (decodeBech32.version != 0)
-          throw new ArgumentError('Invalid address version');
-        P2WPKH p2wpkh = new P2WPKH(
-            data: new PaymentData(address: address), network: network);
-        return p2wpkh.data.output;
+          throw ArgumentError('Invalid address version');
+        P2WPKH p2wpkh = P2WPKH(
+            data: PaymentData(address: address), network: network);
+        return p2wpkh.data.output!;
       }
     }
-    throw new ArgumentError(address + ' has no matching Script');
+    throw ArgumentError(address + ' has no matching Script');
   }
 }

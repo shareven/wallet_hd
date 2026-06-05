@@ -9,7 +9,7 @@ Add this line to pubspec.yaml ( 添加这一行到pubspec.yaml)
 
 ``` 
 dependencies:
-     wallet_hd: ^0.0.2
+     wallet_hd: ^0.0.3
 ```
 
 ## How To Use

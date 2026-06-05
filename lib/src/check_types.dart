@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:math';
+
 const SATOSHI_MAX = 21 * 1e14;
 
 bool isShatoshi(int value) {

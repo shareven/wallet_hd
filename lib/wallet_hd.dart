@@ -4,76 +4,65 @@ import 'package:bip39/bip39.dart' as bip39;
 import 'package:wallet_hd/src/bitcoin_transaction.dart';
 import 'package:wallet_hd/src/ethereum_transaction.dart';
 import 'package:wallet_hd/src/wallet_config.dart';
-import 'package:bitcoin_flutter/bitcoin_flutter.dart' as bitcoin_flutter;
+import 'package:wallet_hd/src/bip32_hd.dart';
 import 'package:web3dart/web3dart.dart';
 
-/// BTC转账
 export 'package:wallet_hd/src/bitcoin_transaction.dart';
-
-/// ETH转账
 export 'package:wallet_hd/src/ethereum_transaction.dart';
 export 'package:wallet_hd/src/rsa_proxy.dart';
 
 class WalletHd {
-  /// 创建随机助记词 | Create Random Mnemonic
   static String createRandomMnemonic() {
-    String randomMnemonic = bip39.generateMnemonic();
-    return randomMnemonic;
+    return bip39.generateMnemonic();
   }
 
-  /// 导入助记词，返回[btc地址 , eth地址] | Import mnemonic words and return [btc address, eth address]
   static Future<Map<String, String>> getAccountAddress(String mnemonic,
-      {String derivePath}) async {
+      {String? derivePath}) async {
     String btcPath = (derivePath != null && derivePath.isNotEmpty)
         ? derivePath
-        : WalletConfig.bitcoinType["BTC"].path;
-    bitcoin_flutter.HDWallet hdWalletBtc =
-        bitcoin_flutter.HDWallet.fromSeed(bip39.mnemonicToSeed(mnemonic))
+        : WalletConfig.bitcoinType["BTC"]!.path;
+    HDWallet hdWalletBtc =
+        HDWallet.fromSeed(bip39.mnemonicToSeed(mnemonic))
             .derivePath(btcPath);
     String btcAddress = hdWalletBtc.address;
 
     String ethPath = (derivePath != null && derivePath.isNotEmpty)
         ? derivePath
-        : WalletConfig.ethereumType["ETH"].path;
+        : WalletConfig.ethereumType["ETH"]!.path;
     EthPrivateKey ethPrivateKey =
         ethMnemonicToPrivateKey(mnemonic, derivePath: ethPath);
-    EthereumAddress ethAddr = await ethPrivateKey.extractAddress();
+    EthereumAddress ethAddr = ethPrivateKey.address;
     String ethAddress = ethAddr.toString();
 
     return {"BTC": btcAddress, "ETH": ethAddress};
   }
 
-  /// ETH 导入助记词返回私钥 | ETH import mnemonic phrase and return private key
   static EthPrivateKey ethMnemonicToPrivateKey(String mnemonic,
-      {String derivePath}) {
+      {String? derivePath}) {
     String ethPath = (derivePath != null && derivePath.isNotEmpty)
         ? derivePath
-        : WalletConfig.ethereumType["ETH"].path;
-    bitcoin_flutter.HDWallet hdWalletEth =
-        bitcoin_flutter.HDWallet.fromSeed(bip39.mnemonicToSeed(mnemonic))
+        : WalletConfig.ethereumType["ETH"]!.path;
+    HDWallet hdWalletEth =
+        HDWallet.fromSeed(bip39.mnemonicToSeed(mnemonic))
             .derivePath(ethPath);
 
     String privateKey = hdWalletEth.privKey;
 
-    EthPrivateKey ethPrivateKey = EthPrivateKey.fromHex(privateKey);
-    return ethPrivateKey;
+    return EthPrivateKey.fromHex(privateKey);
   }
 
-  /// BTC 导入助记词返回私钥wif | BTC import mnemonic phrase and return private key wif
-  static String btcMnemonicToPrivateKey(String mnemonic, {String derivePath}) {
-    /// BTC 普通地址 | Ordinary address
+  static String btcMnemonicToPrivateKey(String mnemonic, {String? derivePath}) {
     String btcPath = (derivePath != null && derivePath.isNotEmpty)
         ? derivePath
-        : WalletConfig.bitcoinType["BTC"].path;
-    bitcoin_flutter.HDWallet hdWalletBtc =
-        bitcoin_flutter.HDWallet.fromSeed(bip39.mnemonicToSeed(mnemonic))
+        : WalletConfig.bitcoinType["BTC"]!.path;
+    HDWallet hdWalletBtc =
+        HDWallet.fromSeed(bip39.mnemonicToSeed(mnemonic))
             .derivePath(btcPath);
 
     return hdWalletBtc.wif;
   }
 
-  /// BTC转账 | BTC transfer
-  static Future<String> transactionBTC(
+  static Future<String?> transactionBTC(
     String mnemonic,
     String fromAddress,
     String toAddress,
@@ -83,19 +72,18 @@ class WalletHd {
   ) async {
     String privateKey = btcMnemonicToPrivateKey(mnemonic);
 
-    Btransaction btransaction =
+    Btransaction? btransaction =
         await BitcoinTransaction.createBitcoinTransaction(
             fromAddress, toAddress, double.parse(amount), fee,
             unspends: unspand);
 
-    String txPack = await BitcoinTransaction.signBitcoinTransaction(
-        privateKey, btransaction);
+    if (btransaction == null) return null;
 
-    return txPack;
+    return BitcoinTransaction.signBitcoinTransaction(
+        privateKey, btransaction);
   }
 
-  /// ETH转账 | ETH transfer
-  static Future<String> transactionETH(
+  static Future<String?> transactionETH(
     String mnemonic,
     String fromAddress,
     String toAddress,
@@ -109,14 +97,11 @@ class WalletHd {
         await EthereumTransaction.createEthereumTransaction(
             fromAddress, toAddress, amount, gasPrice, nonce);
 
-    String txPack = await EthereumTransaction.signEthereumTransaction(
+    return EthereumTransaction.signEthereumTransaction(
         ethPrivateKey, transaction);
-
-    return txPack;
   }
 
-  /// ERC20USDT转账 | ERC20USDT transfer
-  static Future<String> transactionERC20USDT(
+  static Future<String?> transactionERC20USDT(
     String mnemonic,
     String fromAddress,
     String toAddress,
@@ -126,12 +111,12 @@ class WalletHd {
   ) async {
     EthPrivateKey ethPrivateKey = ethMnemonicToPrivateKey(mnemonic);
 
-    Etransaction transaction = await EthereumTransaction.createErc20Transaction(
+    Etransaction? transaction = await EthereumTransaction.createErc20Transaction(
         fromAddress, toAddress, amount, gasPrice, nonce);
 
-    String txPack = await EthereumTransaction.signEthereumTransaction(
-        ethPrivateKey, transaction);
+    if (transaction == null) return null;
 
-    return txPack;
+    return EthereumTransaction.signEthereumTransaction(
+        ethPrivateKey, transaction);
   }
 }

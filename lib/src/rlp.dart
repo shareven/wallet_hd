@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:web3dart/crypto.dart';
@@ -123,11 +122,17 @@ List<int> encode(dynamic value) {
   return builder.asBytes();
 }
 
-BigInt numPow2BigInt(num value, decimals) {
-  String bigValue = (value.toDouble() * pow(10, decimals)).toString();
-  print(bigValue);
-  BigInt bigIntValue =
-      BigInt.parse(bigValue.substring(0, bigValue.indexOf('.')));
-  print(bigIntValue);
-  return bigIntValue;
+BigInt numPow2BigInt(num value, int decimals) {
+  String str = value.toString();
+  if (!str.contains('.')) {
+    return BigInt.parse(str) * BigInt.from(10).pow(decimals);
+  }
+  int dotIndex = str.indexOf('.');
+  int decimalPlaces = str.length - dotIndex - 1;
+  String intPart = str.substring(0, dotIndex);
+  String decPart = str.substring(dotIndex + 1);
+  if (decimalPlaces <= decimals) {
+    return BigInt.parse(intPart + decPart.padRight(decimals, '0'));
+  }
+  return BigInt.parse(intPart + decPart.substring(0, decimals));
 }

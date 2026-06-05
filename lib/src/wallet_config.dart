@@ -1,14 +1,14 @@
-import 'package:bitcoin_flutter/bitcoin_flutter.dart' as bitcoin_flutter;
+import 'package:wallet_hd/src/network_type.dart';
 
 class WalletConfig {
   static final Map<String, CoinInfo> bitcoinType = {
-    'BTC': CoinInfo("m/44'/0'/0'/0/0", bitcoin_flutter.bitcoin, 8),
+    'BTC': CoinInfo("m/44'/0'/0'/0/0", bitcoin, 8),
   };
   static final Map<String, CoinInfo> omniType = {
     'USDT':
-        CoinInfo("m/44'/0'/0'/0/0", bitcoin_flutter.bitcoin, 8, address: '31'),
+        CoinInfo("m/44'/0'/0'/0/0", bitcoin, 8, address: '31'),
     'TUSDT':
-        CoinInfo("m/44'/0'/0'/0/1", bitcoin_flutter.testnet, 8, address: '2'),
+        CoinInfo("m/44'/0'/0'/0/1", testnet, 8, address: '2'),
   };
   static final Map<String, CoinInfo> ethereumType = {
     'ETH': CoinInfo("m/44'/60'/0'/0/0", 1, 18, gasLimit: 21000),
@@ -24,10 +24,10 @@ class WalletConfig {
 
 class CoinInfo {
   final String path;
-  final Object network; //NetworkType or int
+  final Object network;
   final int decimals;
-  final String address;
-  final int gasLimit;
+  final String? address;
+  final int? gasLimit;
 
   CoinInfo(this.path, this.network, this.decimals,
       {this.address, this.gasLimit});
