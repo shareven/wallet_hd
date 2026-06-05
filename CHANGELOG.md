@@ -9,3 +9,7 @@
 ## [0.0.3] 
 
 * Support null-safety
+
+## [0.0.4] 
+
+* Fix README example code for null safety

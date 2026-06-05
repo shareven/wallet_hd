@@ -9,7 +9,7 @@ Add this line to pubspec.yaml ( 添加这一行到pubspec.yaml)
 
 ``` 
 dependencies:
-     wallet_hd: ^0.0.3
+     wallet_hd: ^0.0.4
 ```
 
 ## How To Use
@@ -19,25 +19,25 @@ Use the class `WalletHd`
 Properties and functions:
 ``` dart
   /// 创建随机助记词 | Create Random Mnemonic
-  static String createRandomMnemonic
+  static String createRandomMnemonic()
 
   /// 导入助记词，返回[btc地址 , eth地址] | Import mnemonic words and return [btc address, eth address]
-  static Future<Map<String, String>> getAccountAddress
+  static Future<Map<String, String>> getAccountAddress(String mnemonic, {String? derivePath})
 
   /// ETH 导入助记词返回私钥 | ETH import mnemonic phrase and return private key
-  static EthPrivateKey ethMnemonicToPrivateKey
+  static EthPrivateKey ethMnemonicToPrivateKey(String mnemonic, {String? derivePath})
 
   /// BTC 导入助记词返回私钥wif | BTC import mnemonic phrase and return private key wif
-  static String btcMnemonicToPrivateKey
+  static String btcMnemonicToPrivateKey(String mnemonic, {String? derivePath})
 
   /// BTC转账 | BTC transfer
-  static Future<String> transactionBTC
+  static Future<String?> transactionBTC(String mnemonic, String fromAddress, String toAddress, String amount, num fee, List<BitcoinIn> unspand)
 
   /// ETH转账 | ETH transfer
-  static Future<String> transactionETH
+  static Future<String?> transactionETH(String mnemonic, String fromAddress, String toAddress, String amount, String gasPrice, int nonce)
 
   /// ERC20USDT转账 | ERC20USDT transfer
-  static Future<String> transactionERC20USDT
+  static Future<String?> transactionERC20USDT(String mnemonic, String fromAddress, String toAddress, String amount, String gasPrice, int nonce)
 ```
 
 ## Examples
@@ -48,54 +48,54 @@ import 'package:wallet_hd/wallet_hd.dart';
 void main() async {
   String mnemonic = WalletHd.createRandomMnemonic();
   Map<String, String> mapAddr = await WalletHd.getAccountAddress(mnemonic);
-  String btcAddr = mapAddr["BTC"];
-  String ethAddr = mapAddr["ETH"];
+  String btcAddr = mapAddr["BTC"]!;
+  String ethAddr = mapAddr["ETH"]!;
   String toAddress = "input the to address ...";
   String amount = "0.1";
-  String btcTxPack =
+  String? btcTxPack =
       await testTransactionBTC(mnemonic, btcAddr, toAddress, amount);
-  String ethTxPack =
+  String? ethTxPack =
       await testTransactionETH(mnemonic, ethAddr, toAddress, amount);
-  String erc20USDTTxPack =
+  String? erc20USDTTxPack =
       await testTransactionERC20USDT(mnemonic, ethAddr, toAddress, amount);
   print(btcTxPack);
   print(ethTxPack);
   print(erc20USDTTxPack);
 }
 
-Future testTransactionBTC(
+Future<String?> testTransactionBTC(
   String mnemonic,
   String fromAddress,
   String toAddress,
   String amount,
 ) async {
-  List unspandList = [
+  List<Map<String, dynamic>> unspandList = [
     {"txid": "0x12312313aaaaaaaaa", "output_no": 11, "value": "0.2323"},
     {"txid": "0x12312313bbbbbbbbb", "output_no": 12, "value": "0.2323"},
   ];
-  List pendingList = [
+  List<Map<String, dynamic>> pendingList = [
     {"txid": "0x12312313aaaaaaaaa", "value": "0.2323"}
   ];
   double fee = 0.0002655;
-  List handledUnspandList = unspandList;
-  // 如果未确认交易列表不为空，则要从unspands list中去除待确认的交易 | If the list of unconfirmed transactions is not empty, remove the pending transactions from the unspands list
+  List<Map<String, dynamic>> handledUnspandList = List.from(unspandList);
   if (pendingList.isNotEmpty) {
-    pendingList.forEach((e) {
+    for (var e in pendingList) {
       handledUnspandList.removeWhere((x) => e["txid"] == x["txid"]);
-    });
+    }
   }
   List<BitcoinIn> unspand = handledUnspandList
-      .map(
-          (e) => BitcoinIn(e["txid"], e["output_no"], double.parse(e["value"])))
+      .map((e) => BitcoinIn(
+          e["txid"] as String, e["output_no"] as int, double.parse(e["value"] as String)))
       .toList();
 
-  String txPack = await WalletHd.transactionBTC(
+  String? txPack = await WalletHd.transactionBTC(
       mnemonic, fromAddress, toAddress, amount, fee, unspand);
   print("btc txPack");
   print(txPack);
+  return txPack;
 }
 
-Future testTransactionETH(
+Future<String?> testTransactionETH(
   String mnemonic,
   String fromAddress,
   String toAddress,
@@ -105,13 +105,14 @@ Future testTransactionETH(
 
   /// 新创建的账号初始none是-1 | the new account nonce is -1
   int nonce = -1;
-  String txPack = await WalletHd.transactionETH(
+  String? txPack = await WalletHd.transactionETH(
       mnemonic, fromAddress, toAddress, amount, gasPrice, nonce);
   print("eth txPack");
   print(txPack);
+  return txPack;
 }
 
-Future testTransactionERC20USDT(
+Future<String?> testTransactionERC20USDT(
   String mnemonic,
   String fromAddress,
   String toAddress,
@@ -121,11 +122,10 @@ Future testTransactionERC20USDT(
 
   /// 新创建的账号初始none是-1 | the new account nonce is -1
   int nonce = -1;
-  String txPack = await WalletHd.transactionERC20USDT(
+  String? txPack = await WalletHd.transactionERC20USDT(
       mnemonic, fromAddress, toAddress, amount, gasPrice, nonce);
   print("eth txPack");
   print(txPack);
+  return txPack;
 }
-
-
 ```
